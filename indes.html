@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0284c7" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Zahlenstrahl" />
+  <title>Zahlenstrahl-Entdecker</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./icon-512.png" />
+  <link rel="apple-touch-icon" href="./icon-512.png" />
+  <style>
+    :root {
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --accent-a: #ef4444;
+      --accent-b: #10b981;
+      --accent-mid: #f59e0b;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 32px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: white;
+      padding: 18px 16px 22px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+    }
+
+    .header-top {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stars-badge {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    #installBtn {
+      display: none;
+      margin: 12px auto 0;
+      background: #fef08a;
+      color: #854d0e;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    main {
+      max-width: 760px;
+      margin: 16px auto 0;
+      padding: 0 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+      margin-bottom: 14px;
+    }
+
+    .range-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .range-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .range-btn {
+      border: 1.5px solid var(--border);
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .range-btn.active {
+      background: #e0f2fe;
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+
+    /* Zahlenstrahl */
+    .line-wrapper {
+      position: relative;
+      padding: 46px 14px 34px;
+      margin: 8px 0;
+      touch-action: none;
+    }
+
+    .number-line {
+      position: relative;
+      height: 8px;
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    .span-bar {
+      position: absolute;
+      top: 0;
+      height: 8px;
+      background: linear-gradient(90deg, rgba(239,68,68,0.45), rgba(245,158,11,0.6), rgba(16,185,129,0.45));
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .tick {
+      position: absolute;
+      top: -6px;
+      width: 2px;
+      height: 20px;
+      background: #64748b;
+      transform: translateX(-50%);
+    }
+
+    .tick.minor {
+      top: -2px;
+      height: 12px;
+      background: #94a3b8;
+    }
+
+    .tick-label {
+      position: absolute;
+      top: 18px;
+      transform: translateX(-50%);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .marker {
+      position: absolute;
+      top: -36px;
+      transform: translateX(-50%);
+      padding: 5px 10px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: grab;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      z-index: 3;
+      transition: transform 0.08s ease;
+    }
+
+    .marker::after {
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0;
+      border-style: solid;
+    }
+
+    .marker-a { background: var(--accent-a); }
+    .marker-a::after { border-color: var(--accent-a) transparent transparent; }
+
+    .marker-b { background: var(--accent-b); }
+    .marker-b::after { border-color: var(--accent-b) transparent transparent; }
+
+    .marker-mid {
+      background: var(--accent-mid);
+      top: -40px;
+      z-index: 4;
+      display: none;
+    }
+    .marker-mid::after { border-color: var(--accent-mid) transparent transparent; }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .num-control {
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .num-control span.lbl {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .stepper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      font-size: 1.2rem;
+      font-weight: 800;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+
+    .val-display {
+      min-width: 44px;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      min-width: 150px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      min-width: 150px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1.5px solid #fcd34d;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .explanation-box {
+      margin-top: 14px;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      display: none;
+    }
+
+    .quiz-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .quiz-input-row input {
+      flex: 1;
+      padding: 11px 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .feedback {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      display: none;
+    }
+    .feedback.ok { background: #dcfce7; color: #166534; }
+    .feedback.err { background: #fee2e2; color: #991b1b; }
+
+    .example-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .ex-btn {
+      text-align: left;
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .ex-btn.active {
+      background: #e0f2fe;
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>📏 Zahlenstrahl-Entdecker</h1>
+    <div class="stars-badge">⭐ <span id="starCount">0</span> Sterne</div>
+  </div>
+  <div style="text-align:center;">
+    <button id="installBtn">📲 Als Android-App installieren</button>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="explore">1. Entdecken</button>
+    <button class="tab-btn" data-tab="quiz">2. Mitte-Quiz</button>
+    <button class="tab-btn" data-tab="examples">3. Alltag</button>
+  </div>
+
+  <!-- MODUS 1: ENTDECKEN -->
+  <section id="tab-explore" class="card">
+    <div class="range-bar">
+      <strong>Zahlenraum:</strong>
+      <div class="range-buttons" id="exploreRanges">
+        <button class="range-btn active" data-min="0" data-max="20" data-step="1">0 – 20</button>
+        <button class="range-btn" data-min="0" data-max="100" data-step="5">0 – 100</button>
+        <button class="range-btn" data-min="0" data-max="1000" data-step="50">0 – 1.000</button>
+        <button class="range-btn" data-min="-20" data-max="20" data-step="2">-20 – 20</button>
+      </div>
+    </div>
+
+    <p style="margin:4px 0 8px; color:var(--muted); font-size:0.9rem;">
+      Ziehe den <strong>roten</strong> und den <strong>grünen</strong> Marker auf dem Strahl oder nutze die Tasten:
+    </p>
+
+    <div class="line-wrapper" id="exploreLineWrap">
+      <div class="number-line" id="exploreLine">
+        <div class="span-bar" id="exploreSpan"></div>
+        <div class="marker marker-a" id="markerA">4</div>
+        <div class="marker marker-b" id="markerB">14</div>
+        <div class="marker marker-mid" id="markerMid">9</div>
+      </div>
+    </div>
+
+    <div class="controls-grid">
+      <div class="num-control">
+        <span class="lbl" style="color:var(--accent-a);">🔴 Erste Zahl</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="nudge('a', -1)">−</button>
+          <span class="val-display" id="valA">4</span>
+          <button class="step-btn" onclick="nudge('a', 1)">+</button>
+        </div>
+      </div>
+      <div class="num-control">
+        <span class="lbl" style="color:var(--accent-b);">🟢 Zweite Zahl</span>
+        <div class="stepper">
+          <button class="step-btn" onclick="nudge('b', -1)">−</button>
+          <span class="val-display" id="valB">14</span>
+          <button class="step-btn" onclick="nudge('b', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-secondary" onclick="stepTowardMiddle()">👣 Einen Schritt zur Mitte</button>
+      <button class="btn-primary" onclick="revealMiddle()">⭐ Mitte anzeigen & erklären</button>
+    </div>
+
+    <div class="explanation-box" id="explainBox"></div>
+  </section>
+
+  <!-- MODUS 2: QUIZ -->
+  <section id="tab-quiz" class="card hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <h2 style="margin:0; font-size:1.1rem;">🕵️‍♀️ Finde die genaue Mitte!</h2>
+      <button class="range-btn" onclick="newQuiz()">Neue Aufgabe ↻</button>
+    </div>
+    <p id="quizPrompt" style="font-size:1.05rem; margin:10px 0;"></p>
+
+    <div class="line-wrapper" id="quizLineWrap">
+      <div class="number-line" id="quizLine">
+        <div class="span-bar" id="quizSpan"></div>
+        <div class="marker marker-a" id="qMarkerA">2</div>
+        <div class="marker marker-b" id="qMarkerB">10</div>
+        <div class="marker marker-mid" id="qMarkerMid">?</div>
+      </div>
+    </div>
+
+    <p style="margin:4px 0; font-size:0.85rem; color:var(--muted);">
+      Tippe direkt auf die Mitte auf dem Zahlenstrahl oder gib die Zahl unten ein:
+    </p>
+
+    <div class="quiz-input-row">
+      <input type="number" step="0.5" id="quizAnswer" placeholder="Mitte eingeben..." />
+      <button class="btn-primary" style="flex:0 0 auto;" onclick="checkQuiz()">Prüfen ✓</button>
+    </div>
+
+    <div class="feedback" id="quizFeedback"></div>
+  </section>
+
+  <!-- MODUS 3: ALLTAGSBEISPIELE -->
+  <section id="tab-examples" class="card hidden">
+    <h2 style="margin:0 0 10px; font-size:1.1rem;">🌍 Praktische Beispiele aus dem Alltag</h2>
+    <div class="example-cards" id="exampleButtons">
+      <button class="ex-btn active" onclick="loadExample(0)">🏠 Schulweg & Hausnummern</button>
+      <button class="ex-btn" onclick="loadExample(1)">🌡️ Thermometer im Winter</button>
+      <button class="ex-btn" onclick="loadExample(2)">✂️ Basteln mit dem Lineal</button>
+      <button class="ex-btn" onclick="loadExample(3)">🚗 Pause auf der Autobahn</button>
+    </div>
+
+    <div id="exampleStory" style="background:#f8fafc; padding:12px; border-radius:12px; font-size:0.95rem; line-height:1.45;"></div>
+
+    <div class="line-wrapper" id="exLineWrap">
+      <div class="number-line" id="exLine">
+        <div class="span-bar" id="exSpan"></div>
+        <div class="marker marker-a" id="exMarkerA">4</div>
+        <div class="marker marker-b" id="exMarkerB">16</div>
+        <div class="marker marker-mid" id="exMarkerMid">10</div>
+      </div>
+    </div>
+
+    <div class="quiz-input-row">
+      <input type="number" step="0.5" id="exAnswer" placeholder="Deine Lösung..." />
+      <button class="btn-primary" style="flex:0 0 auto;" onclick="checkExample()">Lösung prüfen</button>
+    </div>
+    <div class="feedback" id="exFeedback"></div>
+  </section>
+</main>
+
+<script>
+  // Service Worker & Android Install Prompt
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+
+  // Sterne-Speicher
+  let stars = Number(localStorage.getItem('zs_stars') || 0);
+  const starCountEl = document.getElementById('starCount');
+  starCountEl.textContent = stars;
+  function addStar() {
+    stars++;
+    localStorage.setItem('zs_stars', stars);
+    starCountEl.textContent = stars;
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.tab;
+      ['explore', 'quiz', 'examples'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== target);
+      });
+      if (target === 'quiz' && !quizState.initialized) newQuiz();
+      if (target === 'examples') loadExample(currentExampleIdx);
+    });
+  });
+
+  // Hilfsfunktion zum Zeichnen eines Zahlenstrahls
+  function renderTicks(lineEl, min, max, majorStep) {
+    lineEl.querySelectorAll('.tick, .tick-label').forEach(el => el.remove());
+    const total = max - min;
+    for (let v = min; v <= max; v += majorStep) {
+      const pct = ((v - min) / total) * 100;
+      const tick = document.createElement('div');
+      tick.className = 'tick';
+      tick.style.left = pct + '%';
+      lineEl.appendChild(tick);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'tick-label';
+      lbl.style.left = pct + '%';
+      lbl.textContent = v;
+      lineEl.appendChild(lbl);
+    }
+  }
+
+  function updateSpan(spanEl, a, b, min, max) {
+    const left = Math.min(a, b);
+    const right = Math.max(a, b);
+    const total = max - min;
+    spanEl.style.left = (((left - min) / total) * 100) + '%';
+    spanEl.style.width = (((right - left) / total) * 100) + '%';
+  }
+
+  // --- MODUS 1: ENTDECKEN ---
+  const explore = { min: 0, max: 20, step: 1, a: 4, b: 14 };
+
+  function updateExplore() {
+    const line = document.getElementById('exploreLine');
+    renderTicks(line, explore.min, explore.max, explore.step);
+    const total = explore.max - explore.min;
+
+    const mA = document.getElementById('markerA');
+    const mB = document.getElementById('markerB');
+    mA.style.left = (((explore.a - explore.min) / total) * 100) + '%';
+    mA.textContent = explore.a;
+    mB.style.left = (((explore.b - explore.min) / total) * 100) + '%';
+    mB.textContent = explore.b;
+
+    document.getElementById('valA').textContent = explore.a;
+    document.getElementById('valB').textContent = explore.b;
+    document.getElementById('markerMid').style.display = 'none';
+    document.getElementById('explainBox').style.display = 'none';
+    updateSpan(document.getElementById('exploreSpan'), explore.a, explore.b, explore.min, explore.max);
+  }
+
+  function nudge(which, dir) {
+    const stepSize = explore.max <= 20 ? 1 : (explore.max <= 100 ? 2 : 10);
+    explore[which] = Math.max(explore.min, Math.min(explore.max, explore[which] + dir * stepSize));
+    updateExplore();
+  }
+
+  function stepTowardMiddle() {
+    const stepSize = explore.max <= 20 ? 1 : (explore.max <= 100 ? 2 : 10);
+    if (Math.abs(explore.a - explore.b) <= stepSize) {
+      revealMiddle();
+      return;
+    }
+    if (explore.a < explore.b) {
+      explore.a += stepSize;
+      explore.b -= stepSize;
+    } else {
+      explore.a -= stepSize;
+      explore.b += stepSize;
+    }
+    updateExplore();
+  }
+
+  function revealMiddle() {
+    const mid = (explore.a + explore.b) / 2;
+    const total = explore.max - explore.min;
+    const mMid = document.getElementById('markerMid');
+    mMid.style.left = (((mid - explore.min) / total) * 100) + '%';
+    mMid.textContent = '⭐ ' + mid;
+    mMid.style.display = 'block';
+
+    const low = Math.min(explore.a, explore.b);
+    const high = Math.max(explore.a, explore.b);
+    const diff = high - low;
+    const half = diff / 2;
+
+    const box = document.getElementById('explainBox');
+    box.innerHTML = `
+      <strong>Die Mitte zwischen ${low} und ${high} ist <span style="color:#b45309;font-size:1.1rem;">${mid}</span>!</strong><br><br>
+      <strong>Weg 1 (Abstand halbieren):</strong> Von ${low} bis ${high} sind es <strong>${diff}</strong> Schritte. Die Hälfte davon ist <strong>${half}</strong>. Also: ${low} + ${half} = <strong>${mid}</strong>.<br>
+      <strong>Weg 2 (Zusammenzählen & teilen):</strong> (${low} + ${high}) : 2 = ${low + high} : 2 = <strong>${mid}</strong>.
+    `;
+    box.style.display = 'block';
+  }
+
+  // Dragging auf Zahlenstrahl
+  function makeDraggable(markerEl, key) {
+    let dragging = false;
+    markerEl.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      markerEl.setPointerCapture(e.pointerId);
+    });
+    markerEl.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const rect = document.getElementById('exploreLine').getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const snap = explore.max <= 20 ? 1 : (explore.max <= 100 ? 2 : 10);
+      const raw = explore.min + ratio * (explore.max - explore.min);
+      explore[key] = Math.round(raw / snap) * snap;
+      updateExplore();
+    });
+    markerEl.addEventListener('pointerup', () => dragging = false);
+  }
+  makeDraggable(document.getElementById('markerA'), 'a');
+  makeDraggable(document.getElementById('markerB'), 'b');
+
+  document.querySelectorAll('#exploreRanges .range-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#exploreRanges .range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      explore.min = Number(btn.dataset.min);
+      explore.max = Number(btn.dataset.max);
+      explore.step = Number(btn.dataset.step);
+      explore.a = explore.min + explore.step * 2;
+      explore.b = explore.max - explore.step * 2;
+      updateExplore();
+    });
+  });
+
+  // --- MODUS 2: QUIZ ---
+  const quizState = { initialized: false, a: 2, b: 10, min: 0, max: 20, solved: false };
+
+  function newQuiz() {
+    quizState.initialized = true;
+    quizState.solved = false;
+    const useHundred = Math.random() > 0.5;
+    quizState.min = 0;
+    quizState.max = useHundred ? 100 : 20;
+    const step = useHundred ? 10 : 2;
+    const a = Math.floor(Math.random() * ((quizState.max / step) - 2)) * step;
+    const b = a + (Math.floor(Math.random() * 4) + 1) * step;
+    quizState.a = a;
+    quizState.b = Math.min(quizState.max, b);
+
+    document.getElementById('quizPrompt').innerHTML =
+      `Welche Zahl liegt genau in der Mitte zwischen <strong style="color:var(--accent-a);">${quizState.a}</strong> und <strong style="color:var(--accent-b);">${quizState.b}</strong>?`;
+
+    const line = document.getElementById('quizLine');
+    renderTicks(line, quizState.min, quizState.max, useHundred ? 10 : 2);
+    const total = quizState.max - quizState.min;
+    const mA = document.getElementById('qMarkerA');
+    const mB = document.getElementById('qMarkerB');
+    mA.style.left = ((quizState.a / total) * 100) + '%';
+    mA.textContent = quizState.a;
+    mB.style.left = ((quizState.b / total) * 100) + '%';
+    mB.textContent = quizState.b;
+    document.getElementById('qMarkerMid').style.display = 'none';
+    updateSpan(document.getElementById('quizSpan'), quizState.a, quizState.b, quizState.min, quizState.max);
+
+    document.getElementById('quizAnswer').value = '';
+    document.getElementById('quizFeedback').style.display = 'none';
+  }
+
+  document.getElementById('quizLineWrap').addEventListener('click', (e) => {
+    const rect = document.getElementById('quizLine').getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const snap = quizState.max === 100 ? 5 : 1;
+    const val = Math.round((ratio * quizState.max) / snap) * snap;
+    document.getElementById('quizAnswer').value = val;
+  });
+
+  function checkQuiz() {
+    const guess = Number(document.getElementById('quizAnswer').value);
+    const correct = (quizState.a + quizState.b) / 2;
+    const fb = document.getElementById('quizFeedback');
+    const mMid = document.getElementById('qMarkerMid');
+
+    mMid.style.left = ((correct / quizState.max) * 100) + '%';
+    mMid.textContent = '⭐ ' + correct;
+    mMid.style.display = 'block';
+
+    if (guess === correct) {
+      fb.className = 'feedback ok';
+      fb.textContent = `🎉 Super gemacht! ${correct} liegt genau in der Mitte zwischen ${quizState.a} und ${quizState.b}.`;
+      if (!quizState.solved) {
+        addStar();
+        quizState.solved = true;
+      }
+    } else {
+      fb.className = 'feedback err';
+      fb.textContent = `Fast! Dein Tipp war ${guess}. Die genaue Mitte ist ${correct} (Abstand ${quizState.b - quizState.a} → Hälfte ${(quizState.b - quizState.a)/2}).`;
+    }
+    fb.style.display = 'block';
+  }
+
+  // --- MODUS 3: ALLTAGSBEISPIELE ---
+  const examples = [
+    {
+      title: 'Schulweg & Hausnummern',
+      text: 'Mia wohnt in der Sonnenstraße bei Hausnummer <strong>4</strong>. Ihre beste Freundin Lara wohnt bei Hausnummer <strong>16</strong>. Sie wollen sich genau in der Mitte treffen. Bei welcher Hausnummer treffen sie sich?',
+      min: 0, max: 20, step: 2, a: 4, b: 16
+    },
+    {
+      title: 'Thermometer im Winter',
+      text: 'Morgens zeigt das Thermometer <strong>-4 °C</strong> an. Am Nachmittag wird es wärmer und es hat <strong>+8 °C</strong>. Welche Temperatur liegt genau in der Mitte dazwischen?',
+      min: -10, max: 10, step: 2, a: -4, b: 8
+    },
+    {
+      title: 'Basteln mit dem Lineal',
+      text: 'Du möchtest auf einem Papierstreifen genau in der Mitte zwischen <strong>12 cm</strong> und <strong>28 cm</strong> ein Loch stanzen. Bei wie viel Zentimetern musst du markieren?',
+      min: 0, max: 30, step: 5, a: 12, b: 28
+    },
+    {
+      title: 'Pause auf der Autobahn',
+      text: 'Ihr fahrt bei Kilometer <strong>120</strong> auf die Autobahn auf und wollt bei Kilometer <strong>200</strong> abfahren. Genau auf halber Strecke macht ihr eine Eispause. Bei welchem Kilometerstein ist die Raststätte?',
+      min: 100, max: 220, step: 20, a: 120, b: 200
+    }
+  ];
+
+  let currentExampleIdx = 0;
+
+  function loadExample(idx) {
+    currentExampleIdx = idx;
+    document.querySelectorAll('#exampleButtons .ex-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === idx);
+    });
+    const ex = examples[idx];
+    document.getElementById('exampleStory').innerHTML = ex.text;
+
+    const line = document.getElementById('exLine');
+    renderTicks(line, ex.min, ex.max, ex.step);
+    const total = ex.max - ex.min;
+
+    const mA = document.getElementById('exMarkerA');
+    const mB = document.getElementById('exMarkerB');
+    mA.style.left = (((ex.a - ex.min) / total) * 100) + '%';
+    mA.textContent = ex.a;
+    mB.style.left = (((ex.b - ex.min) / total) * 100) + '%';
+    mB.textContent = ex.b;
+    document.getElementById('exMarkerMid').style.display = 'none';
+    updateSpan(document.getElementById('exSpan'), ex.a, ex.b, ex.min, ex.max);
+
+    document.getElementById('exAnswer').value = '';
+    document.getElementById('exFeedback').style.display = 'none';
+  }
+
+  function checkExample() {
+    const ex = examples[currentExampleIdx];
+    const guess = Number(document.getElementById('exAnswer').value);
+    const correct = (ex.a + ex.b) / 2;
+    const total = ex.max - ex.min;
+
+    const mMid = document.getElementById('exMarkerMid');
+    mMid.style.left = (((correct - ex.min) / total) * 100) + '%';
+    mMid.textContent = '⭐ ' + correct;
+    mMid.style.display = 'block';
+
+    const fb = document.getElementById('exFeedback');
+    if (guess === correct) {
+      fb.className = 'feedback ok';
+      fb.textContent = `🌟 Richtig! Die genaue Mitte ist ${correct}.`;
+      addStar();
+    } else {
+      fb.className = 'feedback err';
+      fb.textContent = `Nicht ganz – die richtige Mitte zwischen ${ex.a} und ${ex.b} ist ${correct}.`;
+    }
+    fb.style.display = 'block';
+  }
+
+  // Start
+  updateExplore();
+</script>
+</body>
+</html>
